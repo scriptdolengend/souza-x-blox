@@ -1,27 +1,357 @@
-\
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090909"><title>Admin | SOUZA X BLOX</title>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080808">
+<title>SOUZA X BLOX</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}.wrap{width:min(1000px,92%);margin:45px auto}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.brand{font-weight:1000;letter-spacing:1px}.brand span{color:#f12743}h1{font-size:30px;margin:8px 0 25px}.muted{color:#999;font-size:13px} .box{background:#131313;border:1px solid #332329;border-radius:14px;padding:22px;margin:18px 0}
-input{width:100%;padding:14px;background:#080808;border:1px solid #444;border-radius:8px;color:white;margin:12px 0}button{border:0;border-radius:8px;padding:12px 16px;background:#f12743;color:#fff;font-weight:bold;cursor:pointer}button:hover{background:#c91530}.logout{background:#292929}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#0a0a0a;border:1px solid #292929;padding:18px;border-radius:10px}.stat strong{display:block;font-size:26px;margin-top:7px}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:450px}th,td{text-align:left;padding:13px;border-bottom:1px solid #292929;font-size:13px}th{color:#aaa}.pill{color:#6ee7a4}.off{color:#ff8290}.small{padding:8px 10px;font-size:11px}.error{color:#ff8290;min-height:18px}@media(max-width:600px){.grid{grid-template-columns:1fr}.wrap{margin:25px auto}}
-</style></head><body><main class="wrap">
-<div class="top"><div class="brand"><span>◆</span> SOUZA X BLOX / ADMIN</div><a href="/" class="muted">Voltar ao site</a></div>
-<h1>Painel administrativo</h1>
-<section id="login" class="box"><h2>Entrar no painel</h2><p class="muted">Área restrita ao administrador.</p><input id="password" type="password" placeholder="Senha administrativa"><button id="loginBtn">ENTRAR</button><p id="loginError" class="error"></p></section>
-<section id="dashboard" class="hidden">
-<div class="top"><p class="muted">Visão geral das ativações</p><button class="logout" id="logout">SAIR</button></div>
-<div class="grid"><div class="stat"><span class="muted">Ativações totais</span><strong id="total">0</strong></div><div class="stat"><span class="muted">Ativas</span><strong id="active">0</strong></div><div class="stat"><span class="muted">Revogadas</span><strong id="revoked">0</strong></div></div>
-<div class="box"><h2>Ativações recentes</h2><p class="muted">Últimos 50 registros. Você pode revogar uma ativação para bloquear o token correspondente.</p><div class="tablewrap"><table><thead><tr><th>ID</th><th>Data (UTC)</th><th>Status</th><th>Ação</th></tr></thead><tbody id="rows"></tbody></table></div><p id="dashError" class="error"></p></div>
-</section></main>
-<script>
-const $=id=>document.getElementById(id);
-async function api(url,opts={}){const r=await fetch(url,{...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}});const d=await r.json();if(!r.ok)throw new Error(d.error||"Erro");return d}
-function showDashboard(){ $("login").classList.add("hidden");$("dashboard").classList.remove("hidden");load()}
-async function load(){try{const d=await api("/api/admin/summary");$("total").textContent=d.total;$("active").textContent=d.active;$("revoked").textContent=d.revoked;$("rows").innerHTML="";
-for(const item of d.recent){const tr=document.createElement("tr");const status=item.active?'<span class="pill">Ativa</span>':'<span class="off">Revogada</span>';tr.innerHTML=`<td>${item.id}</td><td>${item.created_at}</td><td>${status}</td><td>${item.active?`<button class="small" data-id="${item.id}">REVOGAR</button>`:"—"}</td>`;$("rows").appendChild(tr)}
-}catch(e){$("dashError").textContent=e.message;if(e.message.includes("administrativo")){$("dashboard").classList.add("hidden");$("login").classList.remove("hidden")}}}
-$("loginBtn").onclick=async()=>{try{await api("/api/admin/login",{method:"POST",body:JSON.stringify({password:$("password").value})});$("loginError").textContent="";showDashboard()}catch(e){$("loginError").textContent=e.message}};
-$("password").addEventListener("keydown",e=>{if(e.key==="Enter")$("loginBtn").click()});
-$("rows").onclick=async e=>{const id=e.target.dataset.id;if(!id)return;if(!confirm("Revogar esta ativação?"))return;try{await api("/api/admin/revoke/"+id,{method:"POST"});load()}catch(err){$("dashError").textContent=err.message}};
-$("logout").onclick=async()=>{await api("/api/admin/logout",{method:"POST"});$("dashboard").classList.add("hidden");$("login").classList.remove("hidden")};
-api("/api/admin/summary").then(showDashboard).catch(()=>{});
-</script></body></html>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #080808;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    padding: 22px 8%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #292929;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: 900;
+}
+
+.logo span {
+    color: #ff2020;
+}
+
+nav a {
+    color: #aaa;
+    text-decoration: none;
+    margin-left: 18px;
+}
+
+.hero {
+    min-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.tag {
+    color: #ff3030;
+    border: 1px solid #ff2020;
+    padding: 9px 18px;
+    border-radius: 30px;
+    font-size: 12px;
+    margin-bottom: 25px;
+}
+
+h1 {
+    font-size: clamp(42px, 9vw, 85px);
+    font-weight: 900;
+}
+
+h1 span {
+    color: #ff2020;
+}
+
+.description {
+    color: #999;
+    max-width: 550px;
+    line-height: 1.7;
+    margin: 20px 0 30px;
+}
+
+.btn {
+    background: #e60000;
+    color: white;
+    padding: 15px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.info {
+    padding: 60px 8%;
+}
+
+.info h2 {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #111;
+    border: 1px solid #292929;
+    padding: 28px;
+    border-radius: 14px;
+}
+
+.card h3 {
+    color: #ff3030;
+    margin-bottom: 12px;
+}
+
+.card p {
+    color: #999;
+    line-height: 1.6;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    border-top: 1px solid #292929;
+    color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">SOUZA <span>X BLOX</span></div>
+    <nav>
+        <a href="#inicio">Início</a>
+        <a href="#recursos">Recursos</a>
+    </nav>
+</header>
+
+<section class="hero" id="inicio">
+    <div class="tag">SOUZA X BLOX • OFFICIAL</div>
+
+    <h1>SOUZA <span>X BLOX</span></h1>
+
+    <p class="description">
+        Bem-vindo ao SOUZA X BLOX! Uma plataforma com
+        interface moderna, recursos organizados e novidades.
+    </p>
+
+    <a href="#recursos" class="btn">Explorar plataforma</a>
+</section>
+
+<section class="info" id="recursos">
+    <h2>Recursos da plataforma</h2>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Scripts</h3>
+            <p>Área para apresentar os conteúdos disponíveis.</p>
+        </div>
+
+        <div class="card">
+            <h3>Key System</h3>
+            <p>Área de ativação de acesso com validação pelo servidor.</p>
+        </div>
+
+        <div class="card">
+            <h3>Atualizações</h3>
+            <p>Acompanhe as novidades do SOUZA X BLOX.</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    © 2026 SOUZA X BLOX — Todos os direitos reservados.
+</footer>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080808">
+<title>SOUZA X BLOX</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #080808;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    padding: 22px 8%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #292929;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: 900;
+}
+
+.logo span {
+    color: #ff2020;
+}
+
+nav a {
+    color: #aaa;
+    text-decoration: none;
+    margin-left: 18px;
+}
+
+.hero {
+    min-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.tag {
+    color: #ff3030;
+    border: 1px solid #ff2020;
+    padding: 9px 18px;
+    border-radius: 30px;
+    font-size: 12px;
+    margin-bottom: 25px;
+}
+
+h1 {
+    font-size: clamp(42px, 9vw, 85px);
+    font-weight: 900;
+}
+
+h1 span {
+    color: #ff2020;
+}
+
+.description {
+    color: #999;
+    max-width: 550px;
+    line-height: 1.7;
+    margin: 20px 0 30px;
+}
+
+.btn {
+    background: #e60000;
+    color: white;
+    padding: 15px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.info {
+    padding: 60px 8%;
+}
+
+.info h2 {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #111;
+    border: 1px solid #292929;
+    padding: 28px;
+    border-radius: 14px;
+}
+
+.card h3 {
+    color: #ff3030;
+    margin-bottom: 12px;
+}
+
+.card p {
+    color: #999;
+    line-height: 1.6;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    border-top: 1px solid #292929;
+    color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">SOUZA <span>X BLOX</span></div>
+    <nav>
+        <a href="#inicio">Início</a>
+        <a href="#recursos">Recursos</a>
+    </nav>
+</header>
+
+<section class="hero" id="inicio">
+    <div class="tag">SOUZA X BLOX • OFFICIAL</div>
+
+    <h1>SOUZA <span>X BLOX</span></h1>
+
+    <p class="description">
+        Bem-vindo ao SOUZA X BLOX! Uma plataforma com
+        interface moderna, recursos organizados e novidades.
+    </p>
+
+    <a href="#recursos" class="btn">Explorar plataforma</a>
+</section>
+
+<section class="info" id="recursos">
+    <h2>Recursos da plataforma</h2>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Scripts</h3>
+            <p>Área para apresentar os conteúdos disponíveis.</p>
+        </div>
+
+        <div class="card">
+            <h3>Key System</h3>
+            <p>Área de ativação de acesso com validação pelo servidor.</p>
+        </div>
+
+        <div class="card">
+            <h3>Atualizações</h3>
+            <p>Acompanhe as novidades do SOUZA X BLOX.</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    © 2026 SOUZA X BLOX — Todos os direitos reservados.
+</footer>
+
+</body>
+</html>
